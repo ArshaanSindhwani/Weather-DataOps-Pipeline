@@ -1,23 +1,39 @@
 # Weather DataOps Pipeline
 
+A JavaScript DataOps project that collects live weather data on a schedule, stores it, tests it, packages it in Docker and deploys it, with a web dashboard to explore the results.
+
 ## Overview
 
-Weather DataOps Pipeline is a JavaScript-based DataOps project that demonstrates automated data ingestion, processing, testing, containerisation, and deployment through a weather monitoring pipeline.
+The application retrieves current weather data from the OpenWeather API, saves the latest reading as JSON, appends each reading to a CSV history, and shows trends on an interactive dashboard. A GitHub Actions workflow runs the collection on a schedule and triggers deployment to Render.
 
-The application retrieves live weather data from the OpenWeather API, stores the latest weather information in JSON format, appends historical records to a CSV log, and visualises trends through an interactive web dashboard. A GitHub Actions workflow automates data collection and deployment, showcasing core DataOps and CI/CD principles.
+I built this at La Fosse Academy to practise data pipeline automation, API integration, testing, containerisation and continuous delivery.
 
-This project was developed during La Fosse Academy to explore data pipeline automation, API integration, testing, Docker containerisation, and continuous delivery.
+## At a glance
 
----
+As of 14 October 2026, the workflow had run 1,108 times since 12 May 2026, with 1,104 successful runs (99.6%) and 4 failures.
+
+| Metric | Result |
+| - | -: |
+| Workflow runs | 1,108 |
+| Successful runs | 1,104 |
+| Scheduled runs | 1,096 |
+| Push-triggered runs | 11 |
+| Manually triggered runs | 1 |
+| Jest tests | 3 passing |
+| History CSV | 823 lines (822 data rows and a header) |
+| Docker image | 82.8 MB content, 343 MB disk usage |
+| Docker build with no cache | About 7.8 seconds |
+
+The schedule is set to every two hours (`0 */2 * * *`). GitHub can delay scheduled workflows during busy periods, so runs do not always start exactly on the hour.
 
 ## Technologies
 
 ### Backend
 
-- JavaScript (Node.js)
-- Express.js
+- JavaScript (Node.js 22)
+- Express
 
-### Data Processing
+### Data
 
 - OpenWeather API
 - JSON
@@ -31,29 +47,22 @@ This project was developed during La Fosse Academy to explore data pipeline auto
 
 - Plotly.js
 
-### DevOps & Deployment
+### DevOps and deployment
 
 - Docker
 - GitHub Actions
-- CI/CD Pipelines
 - Render
 
----
+## Key features
 
-## Key Features
-
-- Automated weather data ingestion from OpenWeather API
-- Stores latest weather data in JSON format
-- Maintains historical weather records in CSV format
-- REST API endpoints for current and historical weather data
-- Interactive weather dashboard
-- Plotly temperature trend visualisation
-- Automated testing with Jest
-- Docker containerisation
-- GitHub Actions CI/CD workflow
-- Automated deployment through Render
-
----
+- Scheduled weather data ingestion from the OpenWeather API
+- Latest reading stored as JSON
+- Historical readings appended to a CSV log
+- REST endpoints for current and historical data
+- Interactive dashboard with a Plotly temperature trend chart
+- Jest tests that check the data files
+- Docker image with a lean build context
+- GitHub Actions workflow that collects data, tests it and triggers deployment
 
 ## Architecture
 
@@ -61,102 +70,92 @@ This project was developed during La Fosse Academy to explore data pipeline auto
 OpenWeather API
         │
         ▼
-fetchWeather.js
+  fetchWeather.js
         │
         ├── weather.json
         └── weather_log.csv
-                    │
-                    ▼
-              Express API
-                    │
-       ┌────────────┴────────────┐
-       ▼                         ▼
- /api/weather          /api/weather-log
-       │                         │
-       └────────────┬────────────┘
-                    ▼
-             Frontend Dashboard
-                    │
-                    ▼
-               Plotly Charts
+                │
+                ▼
+          Express API
+                │
+     ┌──────────┴──────────┐
+     ▼                     ▼
+/api/weather        /api/weather-log
+     │                     │
+     └──────────┬──────────┘
+                ▼
+        Frontend dashboard
+                │
+                ▼
+          Plotly charts
 ```
 
-## My Contribution
+## My contribution
 
-I worked on implementing and integrating the core DataOps pipeline, including:
+I implemented and connected the pipeline end to end:
 
-- API integration with OpenWeather
-- Automated data collection and transformation
-- JSON and CSV data storage
-- Express API development
-- Frontend dashboard integration
-- Plotly chart visualisation
-- Docker containerisation
-- Automated testing using Jest
-- GitHub Actions CI/CD workflow implementation
-- Deployment pipeline configuration
-
----
+- Integrating the OpenWeather API
+- Collecting and transforming data into JSON and CSV
+- Building the Express API
+- Building the dashboard and Plotly chart
+- Writing the Jest tests
+- Containerising the application with Docker and tightening the build
+- Configuring the GitHub Actions workflow and the Render deployment
 
 ## Screenshots
 
-### Dashboard Overview
+### Dashboard overview
 
 ![Dashboard Overview](screenshots/dashboard-overview.png)
 
-### Temperature Trend Visualisation
+### Temperature trend visualisation
 
 ![Temperature Chart](screenshots/temperature-chart.png)
 
-### Current Weather API Endpoint
+### Current weather API endpoint
 
 ![Weather API Endpoint](screenshots/api-weather-endpoint.png)
 
-### Historical Weather Log Endpoint
+### Historical weather log endpoint
 
 ![Weather Log Endpoint](screenshots/api-weather-log.png)
 
----
+## CI/CD pipeline
 
-## CI/CD Pipeline
+The GitHub Actions workflow runs on a two-hourly schedule, on pushes and on manual dispatch. Each run:
 
-The project uses GitHub Actions to automate the complete data pipeline:
+1. Installs dependencies
+2. Retrieves the latest weather data
+3. Updates the JSON and CSV files
+4. Runs the Jest tests
+5. Commits the updated data files
+6. Triggers deployment to Render
 
-1. Install dependencies
-2. Retrieve latest weather data
-3. Update JSON and CSV datasets
-4. Execute automated tests
-5. Commit updated weather files
-6. Trigger deployment to Render
+Collection, testing, version control and deployment all run without manual steps.
 
-This demonstrates a practical implementation of DataOps principles by automating data collection, validation, version control, and deployment.
-
----
+Four runs in the history failed. One was GitHub failing to allocate a hosted runner. Two failed at the Render deployment step with a non-zero exit, and one was reported by GitHub as a workflow file issue.
 
 ## Testing
 
-Automated tests validate:
+There are 3 Jest tests, all passing. They check that:
 
-- Weather JSON file structure
-- CSV log integrity
-- Data availability
-- Data consistency between pipeline runs
+- `weather.json` exists
+- `weather.json` contains the required keys
+- the CSV log exists and has a header row
 
-Run tests locally:
+They are checks on the data files and do not exercise the application code, so I do not quote a coverage figure.
 
 ```bash
 npm test
 ```
 
-## Running Locally
+## Running locally
 
-### Install Dependencies
+Install dependencies:
 
 ```bash
 npm install
 ```
-
-### Configure Environment Variables
 
 Create a `.env` file:
 
@@ -165,75 +164,68 @@ WEATHER_API_KEY=your_api_key
 CITY=London
 ```
 
-### Fetch Weather Data
+Fetch the latest weather data, then start the application:
 
 ```bash
 node fetchWeather.js
-```
-
-### Start the Application
-
-```bash
 node app.js
 ```
 
-Visit:
+Open the dashboard at:
 
 ```text
 http://localhost:5000
 ```
 
----
-
 ## Docker
 
-Build the container:
+Build the image:
 
 ```bash
-docker build -t weather-dataops .
+docker build -t weather-pipeline .
 ```
 
 Run the container:
 
 ```bash
-docker run -p 5000:5000 weather-dataops
+docker run -p 5001:5000 weather-pipeline
 ```
 
----
+Open the dashboard at `http://localhost:5001`. The mapping connects port 5001 on the host to port 5000 inside the container, which is where the application listens (`ENV PORT=5000` in the Dockerfile). Port 5001 is used on the host because macOS can hold port 5000 for another service. The image serves the data files committed to the repository.
 
-## What I Learned
+I tightened the Docker build after measuring the first version:
 
-Through this project I gained practical experience with:
+| Measure | Before | After |
+| - | -: | -: |
+| Content size | 108 MB | 82.8 MB |
+| Disk usage | 496 MB | 343 MB |
+| Build with no cache | 22.5 seconds | 7.8 seconds |
 
-- DataOps principles and workflows
-- API integration and data ingestion
-- Data transformation and storage
-- Automated testing
-- CI/CD pipelines
-- GitHub Actions
-- Docker containerisation
-- Data visualisation
-- Environment variable management
-- Automated deployment workflows
+The changes were a `.dockerignore` file that keeps `node_modules`, `coverage`, `.git`, `.github`, `.env` and Markdown files out of the build context, copying `package*.json` to the working directory instead of the filesystem root, and installing production dependencies only. Keeping `.env` out of the image also stops local secrets being baked in.
 
----
+## What I learned
 
-## Future Improvements
+- Building a scheduled data pipeline with GitHub Actions
+- Integrating an external API and storing the results in JSON and CSV
+- Reading workflow logs to work out why a run failed
+- Writing tests for data files, and knowing what such tests do not cover
+- Keeping Docker build contexts small and installing only what the image needs
+- Keeping secrets out of images and repositories
+- Deploying automatically to Render
 
-- Add support for multiple cities
-- Store historical data in a database
-- Implement weather forecasting features
-- Add alerting for extreme weather conditions
-- Introduce data quality monitoring
-- Add dashboard filtering and analytics
-- Deploy using Kubernetes for scalability
+## Future improvements
 
----
+- Support several cities
+- Store history in a database
+- Add tests for the API and the fetch script
+- Add alerts for extreme weather
+- Add data quality monitoring
+- Add dashboard filters and summary statistics
 
-## Repository Structure
+## Repository structure
 
 ```text
-WeatherDataOps/
+Weather-DataOps-Pipeline/
 ├── .github/workflows/
 ├── data/
 │   ├── weather.json
@@ -249,6 +241,7 @@ WeatherDataOps/
 │   └── api-weather-log.png
 ├── tests/
 │   └── weather.spec.js
+├── .dockerignore
 ├── app.js
 ├── fetchWeather.js
 ├── Dockerfile
